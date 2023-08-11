@@ -61,8 +61,7 @@ A docker-compose YAML file is provided to spin up all components. `nginx/Dockerf
 
 To start the environment:
 
-1. Copy `nginx-repo.crt` and `nginx-repo.key` into `license/`
-2. Run the startup script: during its first run it will build all Docker images
+1. Run the startup script: during its first run it will build all Docker images
 
 ```
 $ ./nginx-soap-rest.sh -o start -C /etc/ssl/nginx/nginx-repo.crt -K /etc/ssl/nginx/nginx-repo.key 
@@ -76,7 +75,7 @@ $ ./nginx-soap-rest.sh -o start -C /etc/ssl/nginx/nginx-repo.crt -K /etc/ssl/ngi
  ✔ Container openldap                   Started
 ```
 
-3. Check running containers:
+2. Check running containers:
 
 ```
 $ docker ps
@@ -88,7 +87,7 @@ bb8ce93e9b26   echo-server             "/bin/sh -c /deploym…"   8 minutes ago 
 b659e2dde454   nginx-soap-rest         "nginx -g 'daemon of…"   8 minutes ago   Up 6 minutes             0.0.0.0:80->80/tcp                           nginx
 ```
 
-4. Test LDAP authentication through the LDAP connector. The LDAP connector provides NGINX with a REST API and acts as an LDAP client
+3. Test LDAP authentication through the LDAP connector. The LDAP connector provides NGINX with a REST API and acts as an LDAP client
 
 ```
 $ curl -iX POST 127.0.0.1:5389/ldap/auth -u "alice:testpassword" -w '\n'
@@ -101,14 +100,14 @@ content-type: application/json
 {"detail":"Authentication successful"}
 ```
 
-5. Test the source of truth:
+4. Test the source of truth:
 
 ```
 $ curl -s 127.0.0.1:10080/fetchallkeys
 {"rules":[{"enabled":"true","request_translation":{"to_xml":"<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:msg=\"http://test/sampleXMLRequest\"><soapenv:Header/><soapenv:Body><msg:wsServiceRequest><msg:username>$JSON.username$</msg:username><msg:email>$JSON.email$</msg:email><msg:userdata><msg:id>$JSON.userid$</msg:id><msg:phone>$JSON.phone$</msg:phone></msg:userdata></msg:wsServiceRequest></soapenv:Body></soapenv:Envelope>"},"ruleid":1,"upstream":"10.5.0.13:8000","upstream_content":"xml","uri":"test.xml"},{"enabled":"true","ruleid":2,"upstream":"10.5.0.13:8000","upstream_content":"xml","uri":"auto.xml"},{"enabled":"true","ruleid":3,"upstream":"10.5.0.13:8000","upstream_content":"json","uri":"auto.json"}]}
 ```
 
-6. Test the echo server:
+5. Test the echo server:
 
 ```
 $ curl -X POST http://127.0.0.1:8000 -d '{"parm":123}' -w '\n' -i
@@ -120,7 +119,7 @@ Content-type: text/plain
 {"parm":123}
 ```
 
-7. Test NGINX:
+6. Test NGINX:
 
 ```
 $ curl -i 127.0.0.1
