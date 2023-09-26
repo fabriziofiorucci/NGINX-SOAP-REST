@@ -39,29 +39,38 @@ function requestHandler(r) {
 
      //let requestContentType = String(r.headersIn['Content-Type']);
 
-     // X-Upstream-Content HTTP request header can be set to either "json" or "xml" to enable request body translation
+     // Service definition JSON "upstream_content" field describes the content format expected by the upstream. It can be set to either "json" or "xml" and it enables request body translation when needed
      if(r.requestText != null) {
        if (body.rule.upstream_content == 'json') {
-         r.warn('Upstream wants JSON payload');
+         r.warn('Upstream requires JSON payload');
 
          if(isXml(r.requestText)) {
-           r.warn('Payload translation XML -> JSON');
            requestBody = xml.parse(r.requestText);
-           convertedRequestBody = soapToRest(r,requestBody);
+
+           if ('request_translation' in body.rule) {
+             r.warn('Request payload translation XML -> JSON - template-based');
+             convertedRequestBody = templateSoapToRest(r,requestBody,body.rule.request_translation.to_json)
+           } else {
+             r.warn('Request payload translation XML -> JSON - automatic mode');
+             convertedRequestBody = soapToRest(r,requestBody);
+           }
          }
        } else if (body.rule.upstream_content == 'xml') {
-         r.warn('Upstream wants XML payload');
+         r.warn('Upstream requires XML payload');
 
          if(isJson(r.requestText)) {
-           r.warn('Payload translation JSON -> XML');
            requestBody = JSON.parse(r.requestText);
 
            if ('request_translation' in body.rule) {
-             convertedRequestBody = templateRestToXml(r,requestBody,body.rule.request_translation.to_xml)
+             r.warn('Request payload translation JSON -> XML - template-based');
+             convertedRequestBody = templateRestToSoap(r,requestBody,body.rule.request_translation.to_xml)
            } else {
+             r.warn('Request payload translation JSON -> XML - automatic mode');
              convertedRequestBody = restToSoap(r,requestBody);
            }
          }
+       } else {
+         convertedRequestBody = r.requestText;
        }
      }
 
@@ -131,7 +140,7 @@ function headerFilter(r) {
     // Sample response headers injection
     //r.headersOut["Content-Type"] = "application/json";
     //r.headersOut["Content-Type"] = "application/soap+xml; charset=utf-8";
-    r.headersOut["X-Custom-Header"] = "testing123";
+    //r.headersOut["X-Custom-Header"] = "testing123";
 }
 
 // REST to SOAP payload translation
@@ -165,7 +174,7 @@ function jsonToXml(r,json) {
 }
 
 // template-based JSON to XML payload translation
-function templateRestToXml(r,jsonRequestBody,translationTemplate) {
+function templateRestToSoap(r,jsonRequestBody,translationTemplate) {
     r.warn('===> Template-based JSON to XML translation');
     r.warn('Request body: [' + jsonRequestBody + ']');
     r.warn('Template    : [' + translationTemplate + ']');
